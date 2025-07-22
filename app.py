@@ -43,6 +43,19 @@ def fuzzy_brand_to_generic(user_input, brand_dict, threshold=85):
     else:
         return None, None, None
 
+def extract_sample_size(abstract):
+    if not abstract:
+        return None
+    # Try n=123 or n = 123
+    match = re.search(r"n\s*=\s*(\d+)", abstract, re.IGNORECASE)
+    if match:
+        return int(match.group(1))
+    # Try 123 patients/subjects/volunteers/participants
+    match = re.search(r"(\d{2,5})\s+(patients|subjects|volunteers|participants)", abstract, re.IGNORECASE)
+    if match:
+        return int(match.group(1))
+    return None
+
 st.set_page_config(page_title="RWE Drug Comparator", layout="wide")
 st.title("RWE Drug Comparator")
 
@@ -51,16 +64,14 @@ import streamlit as st
 
 def set_example(example):
     st.session_state['input_drugs'] = example['drugs']
-    st.session_state['drug_b'] = example.get('drug_b', '')
     st.session_state['condition'] = example['condition']
     st.session_state['run_search'] = True
 
 st.markdown("""
 ### How to use this app
-1. Enter one or more drugs (brand or generic, separated by commas or semicolons).
-2. Optionally, enter a comparator drug for head-to-head search.
-3. Enter a condition (e.g., ulcerative colitis).
-4. Click 'Search Clinical Trials' to see results.
+1. Enter two or more drugs (brand or generic, separated by commas or semicolons) to compare them head-to-head.
+2. Enter a condition (e.g., ulcerative colitis).
+3. Click 'Search Clinical Trials' to see results.
 
 **Or try one of these examples:**
 """)
@@ -78,7 +89,6 @@ for i, ex in enumerate(examples):
 
 # --- Input fields ---
 input_drugs = st.text_input("Drugs (comma- or semicolon-separated)", placeholder="e.g. adalimumab, infliximab, etanercept", key='input_drugs')
-drug_b = st.text_input("Comparator Drug (optional)", placeholder="e.g. infliximab", key='drug_b')
 condition = st.text_input("Condition", placeholder="e.g. ulcerative colitis", key='condition')
 
 # Auto-run search if example was clicked
@@ -120,7 +130,7 @@ if suggestion_condition:
 
 if search_now:
     if not final_drugs or not corrected_condition:
-        st.warning("Please enter at least one drug and a condition.")
+        st.warning("Please enter at least two drugs and a condition.")
     else:
         with st.spinner("Querying Europe PMC..."):
             # For now, search using the first drug and condition (Europe PMC API is keyword-based)
@@ -171,3 +181,47 @@ if search_now:
                         st.markdown(results[i].get('abstract', 'No abstract available.'), unsafe_allow_html=True)
             else:
                 st.warning("No studies found with explicit comparators in the abstract for your query.")
+
+# --- About/Info Section in Sidebar ---
+with st.sidebar:
+    with st.expander("ℹ️ About this app", expanded=False):
+        st.markdown("""
+### RWE Drug Comparator
+
+**Technologies & Frameworks:**
+- Python 3.12
+- Streamlit (interactive web app)
+- Pandas (data wrangling)
+- RapidFuzz (fuzzy matching, typo correction)
+- Custom regex & NLP logic
+
+**NLP & Extraction:**
+- Brand-to-generic drug mapping (top 200+ US drugs)
+- Fuzzy brand/generic recognition (typo-tolerant)
+- Regex-based sample size extraction
+- Comparator and outcome phrase detection
+- (Planned) Biomedical NER (Hugging Face transformers)
+
+**Data Sources:**
+- Europe PMC (clinical trial abstracts & metadata)
+- PubMed (article links)
+- DOI (publisher article links)
+- RxNorm/openFDA (brand/generic mapping)
+
+**Features:**
+- Multi-drug, side-by-side comparator table
+- Brand/generic name recognition & correction
+- Sample size, year, and outcome snippet extraction
+- Downloadable CSV results for downstream analysis
+- Clickable PubMed links and abstract expanders
+- Example queries for instant exploration
+
+**Use Cases:**
+- Medical Affairs: Literature review, value dossiers, launch readiness
+- RWE/Epidemiology: Comparator mapping, sample size, recency, outcomes
+- Regulatory: Track evidence for new drugs vs. standards of care
+- Commercial: Evidence for messaging, reimbursement, and market access
+
+---
+*Built for rapid, transparent, and actionable evidence review.*
+        """)
