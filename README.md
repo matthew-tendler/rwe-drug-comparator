@@ -1,7 +1,7 @@
 ---
 title: Drug Comparator Generator
 emoji: 💊
-colorFrom: pink
+colorFrom: orange
 colorTo: indigo
 sdk: streamlit
 sdk_version: "1.35.0"
