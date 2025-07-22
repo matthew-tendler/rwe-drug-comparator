@@ -56,7 +56,9 @@ def extract_sample_size(abstract):
     return None
 
 def search_clinicaltrials_gov(drugs, condition, max_results=20):
-    query = " AND ".join([f"{drug}" for drug in drugs]) + f" AND {condition}"
+    # Use OR for drugs, AND for condition
+    drug_query = " OR ".join([f"{drug}" for drug in drugs])
+    query = f"({drug_query}) AND {condition}"
     url = "https://clinicaltrials.gov/api/query/full_studies"
     params = {
         "expr": query,
