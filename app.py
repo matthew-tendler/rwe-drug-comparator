@@ -29,7 +29,7 @@ if st.button("Search Clinical Trials"):
                 st.caption(f"{r['journal']} ({r['pub_year']})")
                 if r.get('abstract'):
                     st.markdown("**Abstract:**")
-                    st.write(r['abstract'])
+                    st.markdown(r['abstract'], unsafe_allow_html=True)
 
                     # Extract comparator/intervention info (NLP)
                     with st.expander("Show extracted entities (beta)", expanded=False):
@@ -49,3 +49,20 @@ if st.button("Search Clinical Trials"):
                     doi_url = f"https://doi.org/{r['doi']}"
                     st.markdown(f"[DOI Link]({doi_url})")
                 st.markdown("---")
+
+# Add non-intrusive info section in the sidebar
+with st.sidebar:
+    with st.expander("ℹ️ About this app", expanded=False):
+        st.markdown("""
+**Technologies & Frameworks**
+- Python
+- Streamlit
+
+**Data Sources**
+- Europe PMC (clinical trial abstracts)
+- PubMed (article links)
+- DOI (publisher article links)
+
+**NLP**
+- Custom extraction via the app's NLP module
+        """)
